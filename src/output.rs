@@ -1,5 +1,5 @@
-use crate::client::QueryResult;
 use crate::OutputFormat;
+use crate::client::QueryResult;
 use tabled::{Table, builder::Builder, settings::Style};
 
 pub fn print_result(result: &QueryResult, format: OutputFormat) {
@@ -16,7 +16,12 @@ fn print_table(result: &QueryResult) {
     }
 
     let mut builder = Builder::default();
-    builder.push_record(result.columns().iter().map(|c| format!("{} ({})", c.name, c.col_type)));
+    builder.push_record(
+        result
+            .columns()
+            .iter()
+            .map(|c| format!("{} ({})", c.name, c.col_type)),
+    );
     for row in result.rows() {
         builder.push_record(row.iter().map(format_value));
     }

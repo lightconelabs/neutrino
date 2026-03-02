@@ -83,10 +83,7 @@ pub struct QueryResult {
 }
 
 impl QueryResult {
-    pub fn new(
-        columns: Vec<Column>,
-        rows: Vec<Vec<serde_json::Value>>,
-    ) -> Result<Self> {
+    pub fn new(columns: Vec<Column>, rows: Vec<Vec<serde_json::Value>>) -> Result<Self> {
         let width = columns.len();
         for (i, row) in rows.iter().enumerate() {
             if row.len() != width {
@@ -180,7 +177,12 @@ impl TrinoClient {
         self.poll_results(initial, limit, quiet)
     }
 
-    fn poll_results(&self, initial: QueryResponse, limit: Option<usize>, quiet: bool) -> Result<QueryResult> {
+    fn poll_results(
+        &self,
+        initial: QueryResponse,
+        limit: Option<usize>,
+        quiet: bool,
+    ) -> Result<QueryResult> {
         let mut columns = initial.columns.unwrap_or_default();
         let mut rows: Vec<Vec<serde_json::Value>> = initial.data.unwrap_or_default();
         let mut next_uri = initial.next_uri;
@@ -191,11 +193,11 @@ impl TrinoClient {
                 bail!("Timed out waiting for query results after 600s");
             }
 
-            if let Some(max) = limit {
-                if rows.len() >= max {
-                    rows.truncate(max);
-                    break;
-                }
+            if let Some(max) = limit
+                && rows.len() >= max
+            {
+                rows.truncate(max);
+                break;
             }
 
             std::thread::sleep(std::time::Duration::from_millis(100));

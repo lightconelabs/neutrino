@@ -8,6 +8,16 @@ use clap::{Parser, ValueEnum};
 use std::fs;
 use std::path::PathBuf;
 
+#[derive(Debug)]
+pub struct ResolvedAuth {
+    pub auth: AuthFlow,
+    pub host: String,
+    pub port: u16,
+    pub catalog: Option<String>,
+    pub schema: Option<String>,
+    pub insecure: bool,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 pub enum OutputFormat {
     Table,
@@ -95,7 +105,7 @@ impl Cli {
         self.resolve_sql_input()?.load()
     }
 
-    pub fn resolve_auth(self) -> Result<(AuthFlow, String, u16, Option<String>, Option<String>, bool)> {
+    pub fn resolve_auth(self) -> Result<ResolvedAuth> {
         let auth = match (self.password, self.jwt_token, self.user) {
             (Some(password), _, Some(user)) => AuthFlow::Basic { user, password },
             (Some(_), _, None) => bail!("--user is required with --password"),
@@ -104,6 +114,13 @@ impl Cli {
             _ => AuthFlow::OAuth2,
         };
 
-        Ok((auth, self.host, self.port, self.catalog, self.schema, self.insecure))
+        Ok(ResolvedAuth {
+            auth,
+            host: self.host,
+            port: self.port,
+            catalog: self.catalog,
+            schema: self.schema,
+            insecure: self.insecure,
+        })
     }
 }
