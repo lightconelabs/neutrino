@@ -83,5 +83,8 @@ fn invalid_user_header_is_rejected() {
     };
     let mut headers = HeaderMap::new();
     let err = auth.apply_headers(&mut headers).unwrap_err();
-    assert!(err.to_string().contains("Invalid X-Trino-User header value"));
+    assert!(
+        err.to_string()
+            .contains("Invalid X-Trino-User header value")
+    );
 }

@@ -65,9 +65,15 @@ fn submit_and_poll_single_page() {
     assert_eq!(body.columns.as_ref().unwrap()[1].name, "name");
     assert_eq!(body.data.as_ref().unwrap().len(), 2);
     assert_eq!(body.data.as_ref().unwrap()[0][0], serde_json::json!(1));
-    assert_eq!(body.data.as_ref().unwrap()[0][1], serde_json::json!("hello"));
+    assert_eq!(
+        body.data.as_ref().unwrap()[0][1],
+        serde_json::json!("hello")
+    );
     assert!(body.next_uri.is_none());
-    assert_eq!(body.stats.unwrap().state, neutrino::client::QueryState::Finished);
+    assert_eq!(
+        body.stats.unwrap().state,
+        neutrino::client::QueryState::Finished
+    );
 
     handle.join().unwrap();
 }

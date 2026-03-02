@@ -45,12 +45,18 @@ fn file_flag_parsed() {
 #[test]
 fn all_flags_parsed() {
     let cli = parse(&[
-        "--host", "trino.example.com",
-        "--port", "8443",
-        "--user", "alice",
-        "--catalog", "hive",
-        "--schema", "default",
-        "--password", "secret",
+        "--host",
+        "trino.example.com",
+        "--port",
+        "8443",
+        "--user",
+        "alice",
+        "--catalog",
+        "hive",
+        "--schema",
+        "default",
+        "--password",
+        "secret",
         "--insecure",
         "SHOW TABLES",
     ])
@@ -122,10 +128,21 @@ fn resolve_sql_no_query_errors() {
 
 #[test]
 fn resolve_auth_basic() {
-    let cli = parse(&["--host", "localhost", "--user", "alice", "--password", "secret", "SELECT 1"]).unwrap();
-    let (auth, ..) = cli.resolve_auth().unwrap();
-    assert!(matches!(auth, neutrino::auth::AuthFlow::Basic { ref user, ref password }
-        if user == "alice" && password == "secret"));
+    let cli = parse(&[
+        "--host",
+        "localhost",
+        "--user",
+        "alice",
+        "--password",
+        "secret",
+        "SELECT 1",
+    ])
+    .unwrap();
+    let neutrino::ResolvedAuth { auth, .. } = cli.resolve_auth().unwrap();
+    assert!(
+        matches!(auth, neutrino::auth::AuthFlow::Basic { ref user, ref password }
+        if user == "alice" && password == "secret")
+    );
 }
 
 #[test]
@@ -137,21 +154,30 @@ fn resolve_auth_password_without_user_errors() {
 
 #[test]
 fn resolve_auth_jwt() {
-    let cli = parse(&["--host", "localhost", "--jwt-token", "abc.def.ghi", "SELECT 1"]).unwrap();
-    let (auth, ..) = cli.resolve_auth().unwrap();
-    assert!(matches!(auth, neutrino::auth::AuthFlow::Jwt { ref token, .. } if token == "abc.def.ghi"));
+    let cli = parse(&[
+        "--host",
+        "localhost",
+        "--jwt-token",
+        "abc.def.ghi",
+        "SELECT 1",
+    ])
+    .unwrap();
+    let neutrino::ResolvedAuth { auth, .. } = cli.resolve_auth().unwrap();
+    assert!(
+        matches!(auth, neutrino::auth::AuthFlow::Jwt { ref token, .. } if token == "abc.def.ghi")
+    );
 }
 
 #[test]
 fn resolve_auth_user_only() {
     let cli = parse(&["--host", "localhost", "--user", "alice", "SELECT 1"]).unwrap();
-    let (auth, ..) = cli.resolve_auth().unwrap();
+    let neutrino::ResolvedAuth { auth, .. } = cli.resolve_auth().unwrap();
     assert!(matches!(auth, neutrino::auth::AuthFlow::None { ref user } if user == "alice"));
 }
 
 #[test]
 fn resolve_auth_defaults_to_oauth2() {
     let cli = parse(&["--host", "localhost", "SELECT 1"]).unwrap();
-    let (auth, ..) = cli.resolve_auth().unwrap();
+    let neutrino::ResolvedAuth { auth, .. } = cli.resolve_auth().unwrap();
     assert!(matches!(auth, neutrino::auth::AuthFlow::OAuth2));
 }

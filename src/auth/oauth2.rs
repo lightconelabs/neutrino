@@ -85,7 +85,7 @@ fn poll_token_server(client: &Client, token_server: &str) -> Result<String> {
 
 fn looks_like_token(value: &str) -> bool {
     !value.is_empty()
-        && value
-            .chars()
-            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.' | '~' | '/' | '+' | '='))
+        && value.chars().all(|c| {
+            c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.' | '~' | '/' | '+' | '=')
+        })
 }
