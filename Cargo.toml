@@ -1,11 +1,19 @@
 [package]
-name = "neutrino"
+name = "neutrino-cli"
 version = "0.1.0"
 edition = "2024"
 repository = "https://github.com/lightconelabs/neutrino"
 description = "Neutrino CLI tool"
 homepage = "https://github.com/lightconelabs/neutrino"
 license = "MIT"
+
+[[bin]]
+name = "neutrino"
+path = "src/main.rs"
+
+[lib]
+name = "neutrino"
+path = "src/lib.rs"
 
 [dependencies]
 anyhow = "1"

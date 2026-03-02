@@ -41,7 +41,7 @@ impl SqlInput {
 }
 
 #[derive(Parser, Debug)]
-#[command(name = "neutrino", about = "A Trino CLI built in Rust")]
+#[command(name = "neutrino", version, about = "A Trino CLI built in Rust")]
 pub struct Cli {
     /// Trino coordinator hostname
     #[arg(long, env = "TRINO_HOST")]
