@@ -1,6 +1,6 @@
 use neutrino::OutputFormat;
 use neutrino::client::{Column, QueryResult};
-use neutrino::output::print_result;
+use neutrino::output::{print_result, write_result};
 
 #[test]
 fn empty_result_prints_no_results() {
@@ -132,6 +132,45 @@ fn json_output() {
 }
 
 #[test]
+fn csv_output() {
+    print_result(
+        &QueryResult::new(
+            vec![
+                Column {
+                    name: "id".into(),
+                    col_type: "integer".into(),
+                },
+                Column {
+                    name: "name".into(),
+                    col_type: "varchar".into(),
+                },
+            ],
+            vec![
+                vec![serde_json::json!(1), serde_json::json!("alice")],
+                vec![serde_json::json!(2), serde_json::Value::Null],
+            ],
+        )
+        .unwrap(),
+        OutputFormat::Csv,
+    );
+}
+
+#[test]
+fn csv_with_commas_in_values() {
+    print_result(
+        &QueryResult::new(
+            vec![Column {
+                name: "value".into(),
+                col_type: "varchar".into(),
+            }],
+            vec![vec![serde_json::json!("hello, world")]],
+        )
+        .unwrap(),
+        OutputFormat::Csv,
+    );
+}
+
+#[test]
 fn mismatched_columns_and_rows_rejected() {
     let result = QueryResult::new(
         vec![Column {
@@ -147,4 +186,49 @@ fn mismatched_columns_and_rows_rejected() {
             .to_string()
             .contains("Row 0 has 2 values but there are 1 columns")
     );
+}
+
+#[test]
+fn write_result_to_buffer() {
+    let result = QueryResult::new(
+        vec![
+            Column {
+                name: "id".into(),
+                col_type: "integer".into(),
+            },
+            Column {
+                name: "name".into(),
+                col_type: "varchar".into(),
+            },
+        ],
+        vec![
+            vec![serde_json::json!(1), serde_json::json!("alice")],
+            vec![serde_json::json!(2), serde_json::json!("bob")],
+        ],
+    )
+    .unwrap();
+
+    let mut buf = Vec::new();
+    write_result(&result, OutputFormat::Csv, &mut buf).unwrap();
+    let output = String::from_utf8(buf).unwrap();
+    assert_eq!(output, "id,name\n1,alice\n2,bob\n");
+}
+
+#[test]
+fn write_json_to_buffer() {
+    let result = QueryResult::new(
+        vec![Column {
+            name: "id".into(),
+            col_type: "integer".into(),
+        }],
+        vec![vec![serde_json::json!(1)]],
+    )
+    .unwrap();
+
+    let mut buf = Vec::new();
+    write_result(&result, OutputFormat::Json, &mut buf).unwrap();
+    let output = String::from_utf8(buf).unwrap();
+    let parsed: Vec<serde_json::Value> = serde_json::from_str(&output).unwrap();
+    assert_eq!(parsed.len(), 1);
+    assert_eq!(parsed[0]["id"], serde_json::json!(1));
 }

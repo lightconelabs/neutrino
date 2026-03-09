@@ -22,6 +22,7 @@ pub struct ResolvedAuth {
 pub enum OutputFormat {
     Table,
     Json,
+    Csv,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -81,7 +82,11 @@ pub struct Cli {
 
     /// Output format
     #[arg(long, value_enum, default_value = "table")]
-    pub output: OutputFormat,
+    pub format: OutputFormat,
+
+    /// Write output to file instead of stdout
+    #[arg(short, long)]
+    pub output: Option<String>,
 
     /// Read SQL from file
     #[arg(short, long, conflicts_with = "query")]
