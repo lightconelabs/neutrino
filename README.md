@@ -9,7 +9,7 @@ Neutrino runs SQL against any Trino coordinator and returns results as formatted
 **Homebrew** (macOS and Linux):
 
 ```bash
-brew install lightconelabs/tap/neutrino
+brew install lightconelabs/tap/neutrino-cli
 ```
 
 **Cargo** (from source):
