@@ -6,7 +6,15 @@ use std::time::{Duration, Instant};
 
 use crate::auth::{Auth, AuthFlow};
 
-const QUERY_POLL_TIMEOUT: Duration = Duration::from_secs(600);
+const DEFAULT_QUERY_POLL_TIMEOUT_SECS: u64 = 600;
+
+fn query_poll_timeout() -> Duration {
+    let secs = std::env::var("NEUTRINO_QUERY_TIMEOUT_SECS")
+        .ok()
+        .and_then(|s| s.parse::<u64>().ok())
+        .unwrap_or(DEFAULT_QUERY_POLL_TIMEOUT_SECS);
+    Duration::from_secs(secs)
+}
 
 #[derive(Debug, Deserialize)]
 pub struct QueryResponse {
@@ -187,10 +195,14 @@ impl TrinoClient {
         let mut rows: Vec<Vec<serde_json::Value>> = initial.data.unwrap_or_default();
         let mut next_uri = initial.next_uri;
         let started = Instant::now();
+        let timeout = query_poll_timeout();
 
         while let Some(uri) = next_uri {
-            if started.elapsed() >= QUERY_POLL_TIMEOUT {
-                bail!("Timed out waiting for query results after 600s");
+            if started.elapsed() >= timeout {
+                bail!(
+                    "Timed out waiting for query results after {}s",
+                    timeout.as_secs()
+                );
             }
 
             if let Some(max) = limit
