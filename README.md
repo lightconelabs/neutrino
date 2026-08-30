@@ -18,7 +18,7 @@ brew install lightconelabs/tap/neutrino-cli
 uv tool install neutrino-sql
 ```
 
-The PyPI distribution is named `neutrino-sql` because `neutrino` was already taken; the installed command is still `neutrino`. It ships the same prebuilt binary as every other install method — Python is only used to deliver it, not to run it. `pipx install neutrino-sql` works the same way.
+This installs the `neutrino` command, and ships the same prebuilt binary as every other install method — Python is only used to deliver it, not to run it. `pipx install neutrino-sql` works the same way.
 
 **Cargo** (from source):
 
