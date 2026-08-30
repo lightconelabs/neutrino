@@ -18,7 +18,7 @@ brew install lightconelabs/tap/neutrino-cli
 uv tool install neutrino-sql
 ```
 
-Installs the `neutrino` command. Python only delivers the binary; it is not needed at runtime.
+Installs the `neutrino` command.
 
 **Cargo** (from source):
 
