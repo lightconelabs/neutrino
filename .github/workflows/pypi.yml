@@ -166,5 +166,13 @@ jobs:
           pattern: wheels-*
           merge-multiple: true
           path: dist
+      - uses: astral-sh/setup-uv@v7
       - name: Publish
-        uses: pypa/gh-action-pypi-publish@release/v1
+        # `--trusted-publishing always` fails loudly if the OIDC exchange is
+        # not configured, rather than silently falling back to looking for a
+        # token. `--check-url` makes a re-run skip already-uploaded files.
+        run: >-
+          uv publish
+          --trusted-publishing always
+          --check-url https://pypi.org/simple/neutrino-sql/
+          'dist/*'
