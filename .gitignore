@@ -1,2 +1,7 @@
 target
 .DS_Store
+
+# Python packaging (maturin / uv)
+dist
+.venv
+uv.lock

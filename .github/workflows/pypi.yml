@@ -1,0 +1,170 @@
+name: PyPI
+
+# Builds platform wheels that ship the `neutrino` binary, so it can be
+# installed with `uv tool install neutrino-sql` / `pipx install neutrino-sql`.
+#
+# Publishes on the same version tags that trigger the cargo-dist release
+# workflow, so a release-plz tag ships crates.io, GitHub Releases, Homebrew
+# and PyPI together. The wheel version is read from Cargo.toml, so nothing
+# needs bumping here.
+
+on:
+  push:
+    tags:
+      - '**[0-9]+.[0-9]+.[0-9]+*'
+  # Verify the packaging still builds when it changes, without publishing.
+  pull_request:
+    paths:
+      - pyproject.toml
+      - .github/workflows/pypi.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  linux:
+    name: Wheel (manylinux ${{ matrix.target }})
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [x86_64, aarch64]
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build wheel
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --out dist
+          manylinux: auto
+          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+      - uses: actions/upload-artifact@v6
+        with:
+          name: wheels-manylinux-${{ matrix.target }}
+          path: dist
+
+  musllinux:
+    name: Wheel (musllinux ${{ matrix.target }})
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [x86_64, aarch64]
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build wheel
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --out dist
+          manylinux: musllinux_1_2
+          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+      - uses: actions/upload-artifact@v6
+        with:
+          name: wheels-musllinux-${{ matrix.target }}
+          path: dist
+
+  macos:
+    name: Wheel (macOS ${{ matrix.target }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-latest
+            target: aarch64
+          - runner: macos-15-intel
+            target: x86_64
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build wheel
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --out dist
+          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+      - uses: actions/upload-artifact@v6
+        with:
+          name: wheels-macos-${{ matrix.target }}
+          path: dist
+
+  windows:
+    name: Wheel (Windows x64)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build wheel
+        uses: PyO3/maturin-action@v1
+        with:
+          target: x64
+          args: --release --out dist
+          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+      - uses: actions/upload-artifact@v6
+        with:
+          name: wheels-windows-x64
+          path: dist
+
+  sdist:
+    name: Source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build sdist
+        uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist
+      - uses: actions/upload-artifact@v6
+        with:
+          name: wheels-sdist
+          path: dist
+
+  smoke-test:
+    name: Smoke test (${{ matrix.os }})
+    needs: [linux, macos, windows]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    env:
+      UV_TOOL_BIN_DIR: ${{ github.workspace }}/tool-bin
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: wheels-*
+          merge-multiple: true
+          path: dist
+      - uses: astral-sh/setup-uv@v7
+      - name: Install from the built wheel and run it
+        shell: bash
+        # --no-build asserts a matching wheel exists for this platform rather
+        # than silently falling back to compiling the sdist.
+        run: |
+          uv tool install --no-index --no-build --find-links dist neutrino-sql
+          "${UV_TOOL_BIN_DIR}/neutrino" --version
+
+  publish:
+    name: Publish to PyPI
+    needs: [linux, musllinux, macos, windows, sdist, smoke-test]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/neutrino-sql
+    permissions:
+      contents: read
+      # Required for PyPI Trusted Publishing (OIDC). No API token needed.
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: wheels-*
+          merge-multiple: true
+          path: dist
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@release/v1

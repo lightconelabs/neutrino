@@ -12,6 +12,14 @@ Neutrino runs SQL against any Trino coordinator and returns results as formatted
 brew install lightconelabs/tap/neutrino-cli
 ```
 
+**uv** (macOS, Linux, and Windows):
+
+```bash
+uv tool install neutrino-sql
+```
+
+The PyPI distribution is named `neutrino-sql` because `neutrino` was already taken; the installed command is still `neutrino`. It ships the same prebuilt binary as every other install method — Python is only used to deliver it, not to run it. `pipx install neutrino-sql` works the same way.
+
 **Cargo** (from source):
 
 ```bash
@@ -120,7 +128,7 @@ neutrino --host trino.example.com --format csv "SELECT * FROM users" > users.csv
 | Startup time | Instant | Seconds ([JVM cold start][jvm-startup]) | Varies |
 | OAuth2 browser flow | Built in, token cached | [Supported][trino-cli-oauth2] | [Supported][trino-python-oauth2] |
 | Output formats | Table, JSON, CSV | [Multiple formats][trino-cli-output] | Custom code |
-| Install | `brew install` or single binary | [JAR download][trino-cli] + JVM | `pip install trino` |
+| Install | `brew install`, `uv tool install`, or single binary | [JAR download][trino-cli] + JVM | `pip install trino` |
 
 [trino-cli]: https://trino.io/docs/current/client/cli.html
 [trino-cli-req]: https://trino.io/docs/current/client/cli.html#requirements
