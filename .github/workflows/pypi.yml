@@ -7,6 +7,11 @@ name: PyPI
 # workflow, so a release-plz tag ships crates.io, GitHub Releases, Homebrew
 # and PyPI together. The wheel version is read from Cargo.toml, so nothing
 # needs bumping here.
+#
+# Running this workflow manually builds everything and exercises the PyPI
+# trusted-publishing OIDC exchange in --dry-run mode, without uploading. Use
+# that to validate the publisher setup before the first real release. Only a
+# version tag ever uploads.
 
 on:
   push:
@@ -157,7 +162,8 @@ jobs:
   publish:
     name: Publish to PyPI
     needs: [linux, musllinux, macos, windows, sdist, smoke-test]
-    if: startsWith(github.ref, 'refs/tags/')
+    # Tags upload for real; a manual run only dry-runs (see the step below).
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -177,8 +183,14 @@ jobs:
         # `--trusted-publishing always` fails loudly if the OIDC exchange is
         # not configured, rather than silently falling back to looking for a
         # token. `--check-url` makes a re-run skip already-uploaded files.
+        #
+        # A manual run adds --dry-run, which still performs the full OIDC
+        # exchange but uploads nothing, so the publisher setup can be verified
+        # without burning a version number. Uploads are therefore reachable
+        # only from a version tag.
         run: >-
           uv publish
           --trusted-publishing always
           --check-url https://pypi.org/simple/neutrino-sql/
+          ${{ github.event_name == 'workflow_dispatch' && '--dry-run' || '' }}
           'dist/*'
